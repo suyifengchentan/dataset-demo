@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据库核心机制可视化实验台</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <p class="eyebrow">Go Visual Lab</p>
+          <h1 id="page-title">数据库核心机制可视化实验台</h1>
+          <p id="page-subtitle" class="subtitle"></p>
+        </div>
+        <nav id="nav" class="nav"></nav>
+      </aside>
+      <main class="content">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="hero-label">交互式数据库学习与诊断面板</p>
+            <h2>从静态原理图升级到真实数据库驱动的可视化观察台</h2>
+            <p>
+              页面既保留四类数据库的原理讲解，也能直接连到真实实例读取元数据、
+              运行统计与样例输出，适合课程演示、项目汇报和实验报告。
+            </p>
+          </div>
+          <div class="hero-grid" id="hero-grid"></div>
+        </section>
+
+        <section class="section control-panel">
+          <div class="section-header">
+            <div>
+              <div class="chip">Live Connect</div>
+              <h3>实时连接配置</h3>
+              <p>填写数据库连接信息，或一键填充项目自带 Docker Compose 示例环境。</p>
+            </div>
+            <div class="action-row">
+              <button id="fill-example" class="action ghost" type="button">填充示例环境</button>
+              <button id="clear-config" class="action ghost" type="button">清空</button>
+              <button id="analyze" class="action primary" type="button">开始实时分析</button>
+            </div>
+          </div>
+
+          <div class="config-grid">
+            <article class="db-form-card">
+              <label class="toggle"><input id="mysql-enabled" type="checkbox" checked />启用 MySQL</label>
+              <h4>MySQL</h4>
+              <label>DSN<input id="mysql-dsn" type="text" placeholder="root:root@tcp(127.0.0.1:3306)/visual_lab" /></label>
+              <label>Schema<input id="mysql-schema" type="text" placeholder="visual_lab" /></label>
+              <label>Table<input id="mysql-table" type="text" placeholder="employees" /></label>
+              <label>Explain Query<textarea id="mysql-explain" rows="4" placeholder="SELECT * FROM employees WHERE dept_id = 10 AND age >= 30 ORDER BY name;"></textarea></label>
+            </article>
+
+            <article class="db-form-card">
+              <label class="toggle"><input id="postgres-enabled" type="checkbox" checked />启用 PostgreSQL</label>
+              <h4>PostgreSQL</h4>
+              <label>DSN<input id="postgres-dsn" type="text" placeholder="postgres://postgres:postgres@127.0.0.1:5432/visual_lab?sslmode=disable" /></label>
+              <label>Schema<input id="postgres-schema" type="text" placeholder="public" /></label>
+              <label>Table<input id="postgres-table" type="text" placeholder="orders" /></label>
+            </article>
+
+            <article class="db-form-card">
+              <label class="toggle"><input id="redis-enabled" type="checkbox" checked />启用 Redis</label>
+              <h4>Redis</h4>
+              <label>Addr<input id="redis-addr" type="text" placeholder="127.0.0.1:6379" /></label>
+              <label>Username<input id="redis-username" type="text" placeholder="optional" /></label>
+              <label>Password<input id="redis-password" type="password" placeholder="optional" /></label>
+              <label>DB<input id="redis-db" type="number" min="0" value="0" /></label>
+              <label>Key Prefix<input id="redis-prefix" type="text" placeholder="dbdemo:atomic" /></label>
+            </article>
+
+            <article class="db-form-card">
+              <label class="toggle"><input id="mongo-enabled" type="checkbox" checked />启用 MongoDB</label>
+              <h4>MongoDB</h4>
+              <label>URI<input id="mongo-uri" type="text" placeholder="mongodb://127.0.0.1:27017" /></label>
+              <label>Database<input id="mongo-database" type="text" placeholder="visual_lab" /></label>
+              <label>Collection<input id="mongo-collection" type="text" placeholder="orders" /></label>
+            </article>
+          </div>
+
+          <div id="live-banner" class="live-banner">
+            <strong>提示</strong>
+            <span>未执行实时分析前，页面下方仍会显示静态原理内容。实时结果会展示在静态内容之前。</span>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <div class="chip">Live Report</div>
+              <h3>实时数据库输出</h3>
+              <p id="live-meta">等待连接。</p>
+            </div>
+          </div>
+          <div id="live-content"></div>
+        </section>
+
+        <div id="content"></div>
+      </main>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+# 这是一个全栈的 docker-compose 配置文件
+# 它不仅运行数据库实例，还运行项目本身的 Go 应用程序
+
+services:
+  # 项目应用服务
+  app:
+    build: .
+    container_name: database-demo-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - postgres
+      - redis
+      - mongodb
+    # 网络设置，确保应用可以连接到数据库容器
+    networks:
+      - database-net
+
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.4
+    container_name: visual-lab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: visual_lab
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - database-net
+
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16
+    container_name: visual-lab-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: visual_lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - database-net
+
+  # Redis 数据库
+  redis:
+    image: redis:7.2
+    container_name: visual-lab-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - database-net
+
+  # MongoDB 数据库
+  mongodb:
+    image: mongo:7.0
+    container_name: visual-lab-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongo/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - database-net
+
+networks:
+  database-net:
+    driver: bridge

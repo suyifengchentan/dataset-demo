@@ -1,0 +1,36 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: visual-lab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: visual_lab
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+
+  postgres:
+    image: postgres:16
+    container_name: visual-lab-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: visual_lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: redis:7.2
+    container_name: visual-lab-redis
+    ports:
+      - "6379:6379"
+
+  mongodb:
+    image: mongo:7.0
+    container_name: visual-lab-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongo/init:/docker-entrypoint-initdb.d:ro
