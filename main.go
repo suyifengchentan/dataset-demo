@@ -36,6 +36,7 @@ func main() {
 		}
 	})
 	analyzer := live.NewAnalyzer()
+	simulator := live.NewSimulator()
 	mux.HandleFunc("/api/live/analyze", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -51,6 +52,26 @@ func main() {
 		}
 
 		report := analyzer.Analyze(r.Context(), req)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err := json.NewEncoder(w).Encode(report); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	mux.HandleFunc("/api/live/simulate", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req live.AnalyzeRequest
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&req); err != nil {
+			http.Error(w, "invalid request: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		report := simulator.Simulate(r.Context(), req)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if err := json.NewEncoder(w).Encode(report); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

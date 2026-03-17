@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>数据库核心机制可视化实验台</title>
+    <title>数据库业务场景可视化实验台</title>
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <aside class="sidebar">
         <div class="brand">
           <p class="eyebrow">Go Visual Lab</p>
-          <h1 id="page-title">数据库核心机制可视化实验台</h1>
+          <h1 id="page-title">数据库业务场景可视化实验台</h1>
           <p id="page-subtitle" class="subtitle"></p>
         </div>
         <nav id="nav" class="nav"></nav>
@@ -19,11 +19,10 @@
       <main class="content">
         <section class="hero">
           <div class="hero-copy">
-            <p class="hero-label">交互式数据库学习与诊断面板</p>
-            <h2>从静态原理图升级到真实数据库驱动的可视化观察台</h2>
-            <p>
-              页面既保留四类数据库的原理讲解，也能直接连到真实实例读取元数据、
-              运行统计与样例输出，适合课程演示、项目汇报和实验报告。
+            <p id="hero-label" class="hero-label">业务数据库故事化展示</p>
+            <h2 id="hero-heading">把数据库核心机制翻译成业务团队也能快速理解的可视化内容</h2>
+            <p id="hero-description">
+              页面把业务场景、查询设计和底层机制放在同一个视图里，适合演示、培训、方案评审和项目汇报。
             </p>
           </div>
           <div class="hero-grid" id="hero-grid"></div>
@@ -32,13 +31,16 @@
         <section class="section control-panel">
           <div class="section-header">
             <div>
-              <div class="chip">Live Connect</div>
+              <div class="chip">实时连接</div>
               <h3>实时连接配置</h3>
-              <p>填写数据库连接信息，或一键填充项目自带 Docker Compose 示例环境。</p>
+              <p>
+                MySQL、PostgreSQL、Redis、MongoDB 仍然支持实时分析。Milvus 当前以业务场景可视化的方式展示在静态教学区域中。
+              </p>
             </div>
             <div class="action-row">
-              <button id="fill-example" class="action ghost" type="button">填充示例环境</button>
+              <button id="fill-example" class="action ghost" type="button">填充示例</button>
               <button id="clear-config" class="action ghost" type="button">清空</button>
+              <button id="simulate-write" class="action ghost" type="button">模拟业务写入</button>
               <button id="analyze" class="action primary" type="button">开始实时分析</button>
             </div>
           </div>
@@ -82,14 +84,25 @@
 
           <div id="live-banner" class="live-banner">
             <strong>提示</strong>
-            <span>未执行实时分析前，页面下方仍会显示静态原理内容。实时结果会展示在静态内容之前。</span>
+            <span>在你执行实时分析之前，页面下方会先展示业务场景静态内容。</span>
           </div>
         </section>
 
         <section class="section">
           <div class="section-header">
             <div>
-              <div class="chip">Live Report</div>
+              <div class="chip">写入模拟</div>
+              <h3>业务写入模拟结果</h3>
+              <p id="simulation-meta">等待触发模拟。</p>
+            </div>
+          </div>
+          <div id="simulation-content"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <div class="chip">实时报告</div>
               <h3>实时数据库输出</h3>
               <p id="live-meta">等待连接。</p>
             </div>

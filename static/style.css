@@ -2,6 +2,7 @@
   --bg: #f3efe7;
   --panel: rgba(255, 252, 246, 0.84);
   --panel-strong: #fff9ef;
+  --panel-soft: rgba(255, 255, 255, 0.66);
   --ink: #1e2430;
   --muted: #5f6776;
   --line: rgba(30, 36, 48, 0.1);
@@ -9,6 +10,7 @@
   --accent-2: #127475;
   --accent-3: #3f4b9b;
   --accent-4: #7b8c3b;
+  --accent-5: #8a5cf6;
   --shadow: 0 20px 40px rgba(66, 48, 21, 0.12);
   --radius: 24px;
 }
@@ -120,7 +122,9 @@ body {
 .cards-grid,
 .callout-grid,
 .config-grid,
-.metric-grid {
+.metric-grid,
+.scenario-banner,
+.outcome-list {
   display: grid;
   gap: 18px;
 }
@@ -147,6 +151,12 @@ body {
   display: block;
   font-size: 28px;
   margin-top: 8px;
+}
+
+.mini-card p {
+  margin: 10px 0 0;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 .section {
@@ -187,7 +197,9 @@ body {
 .node,
 .callout,
 .db-form-card,
-.metric-card {
+.metric-card,
+.scenario-card,
+.outcome-item {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.55);
 }
@@ -196,6 +208,30 @@ body {
   padding: 14px 16px;
   border-radius: 18px;
   line-height: 1.6;
+}
+
+.scenario-banner {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 22px;
+}
+
+.scenario-card,
+.outcome-item {
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(250, 247, 241, 0.72));
+}
+
+.scenario-card p,
+.outcome-item p {
+  margin: 10px 0 0;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.outcome-list {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .config-grid {
@@ -308,6 +344,23 @@ body {
   line-height: 1.65;
 }
 
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(30, 36, 48, 0.06);
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .stepper {
   display: grid;
   gap: 14px;
@@ -343,6 +396,10 @@ body {
 }
 
 .step.idle::before {
+  background: var(--accent-4);
+}
+
+.step.done::before {
   background: var(--accent-2);
 }
 
@@ -508,6 +565,10 @@ body {
   color: #a84829;
 }
 
+.code-panel {
+  margin-top: 16px;
+}
+
 .code-block {
   overflow: auto;
   margin: 0;
@@ -517,6 +578,11 @@ body {
   color: #f4eee7;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.code-block code {
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  white-space: pre;
 }
 
 @media (max-width: 1080px) {
@@ -549,5 +615,9 @@ body {
 
   .section-header {
     display: block;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
   }
 }

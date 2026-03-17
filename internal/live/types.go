@@ -44,6 +44,12 @@ type AnalyzeResponse struct {
 	Sections    []LiveSection `json:"sections"`
 }
 
+type SimulateResponse struct {
+	GeneratedAt string        `json:"generatedAt"`
+	Summary     string        `json:"summary"`
+	Sections    []LiveSection `json:"sections"`
+}
+
 type LiveSection struct {
 	ID        string      `json:"id"`
 	Name      string      `json:"name"`

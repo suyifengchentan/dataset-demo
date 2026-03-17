@@ -18,35 +18,57 @@ async function analyzeLive(payload) {
   return response.json();
 }
 
+async function simulateBusinessWrite(payload) {
+  const response = await fetch("/api/live/simulate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return response.json();
+}
+
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
   if (className) {
     element.className = className;
   }
-  if (text) {
+  if (text !== undefined) {
     element.textContent = text;
   }
   return element;
 }
 
 function renderHero(data) {
-  document.getElementById("page-title").textContent = data.title;
-  document.getElementById("page-subtitle").textContent = data.subtitle;
+  document.title = data.title || "数据库业务场景可视化实验台";
+  document.getElementById("page-title").textContent = data.title || "";
+  document.getElementById("page-subtitle").textContent = data.subtitle || "";
+  document.getElementById("hero-heading").textContent = data.heroTitle || "";
+  document.getElementById("hero-description").textContent = data.heroBody || "";
 
   const heroGrid = document.getElementById("hero-grid");
   heroGrid.innerHTML = "";
 
-  const stats = [
-    ["4", "数据库主题"],
-    ["4", "实时驱动连接器"],
-    ["10+", "静态教学图示"],
-    ["1", "统一分析入口"],
+  const fallbackStats = [
+    { value: String(data.sections?.length || 0), label: "数据库主题" },
+    {
+      value: String(
+        (data.sections || []).reduce((count, section) => count + (section.visualizations?.length || 0), 0),
+      ),
+      label: "可视化面板",
+    },
   ];
 
-  stats.forEach(([value, label]) => {
+  const stats = data.heroStats?.length ? data.heroStats : fallbackStats;
+  stats.forEach((item) => {
     const card = createElement("div", "mini-card");
-    card.appendChild(createElement("span", "chip", label));
-    card.appendChild(createElement("strong", "", value));
+    card.appendChild(createElement("span", "chip", item.label));
+    card.appendChild(createElement("strong", "", item.value));
+    if (item.detail) {
+      card.appendChild(createElement("p", "", item.detail));
+    }
     heroGrid.appendChild(card);
   });
 }
@@ -80,10 +102,49 @@ function renderHighlights(items) {
   return list;
 }
 
+function renderOutcomeList(items) {
+  const list = createElement("div", "outcome-list");
+  items.forEach((item) => {
+    const node = createElement("div", "outcome-item");
+    node.appendChild(createElement("span", "chip", "业务价值"));
+    node.appendChild(createElement("p", "", item));
+    list.appendChild(node);
+  });
+  return list;
+}
+
+function renderScenario(section) {
+  if (!section.scenario && !section.goal && !section.outcomes?.length) {
+    return null;
+  }
+
+  const wrap = createElement("div", "scenario-banner");
+
+  if (section.scenario) {
+    const card = createElement("div", "scenario-card");
+    card.appendChild(createElement("span", "chip", "业务场景"));
+    card.appendChild(createElement("p", "", section.scenario));
+    wrap.appendChild(card);
+  }
+
+  if (section.goal) {
+    const card = createElement("div", "scenario-card");
+    card.appendChild(createElement("span", "chip", "讲解目标"));
+    card.appendChild(createElement("p", "", section.goal));
+    wrap.appendChild(card);
+  }
+
+  if (section.outcomes?.length) {
+    wrap.appendChild(renderOutcomeList(section.outcomes));
+  }
+
+  return wrap;
+}
+
 function renderStepper(viz) {
   const wrap = createElement("div", "stepper");
   viz.steps.forEach((step, idx) => {
-    const node = createElement("div", `step ${step.state || ""}`);
+    const node = createElement("div", `step ${step.state || ""}`.trim());
     node.dataset.index = String(idx + 1);
     node.appendChild(createElement("div", "step-title", step.title));
     node.appendChild(createElement("div", "", step.detail));
@@ -95,7 +156,7 @@ function renderStepper(viz) {
 function renderItems(items, className) {
   const wrap = createElement("div", className);
   items.forEach((item) => {
-    const node = createElement("div", `node ${item.accent || ""}`);
+    const node = createElement("div", `node ${item.accent || ""}`.trim());
     node.appendChild(createElement("h5", "", item.title));
     if (item.label) {
       node.appendChild(createElement("span", "node-label", item.label));
@@ -112,7 +173,7 @@ function renderItems(items, className) {
 function renderCards(items) {
   const wrap = createElement("div", "cards-grid");
   items.forEach((item) => {
-    const card = createElement("div", `fact-card ${item.accent || ""}`);
+    const card = createElement("div", `fact-card ${item.accent || ""}`.trim());
     card.appendChild(createElement("h5", "", item.title));
     card.appendChild(createElement("p", "", item.detail || ""));
     wrap.appendChild(card);
@@ -138,15 +199,35 @@ function renderTable(columns, rows, className) {
   return table;
 }
 
+function renderCodeVisualization(viz) {
+  const wrap = createElement("div", "code-panel");
+  const pre = createElement("pre", "code-block");
+  const code = createElement("code", viz.language ? `language-${viz.language}` : "", viz.content || "");
+  pre.appendChild(code);
+  wrap.appendChild(pre);
+  return wrap;
+}
+
+function renderMeta(meta) {
+  if (!meta || !Object.keys(meta).length) {
+    return null;
+  }
+
+  const row = createElement("div", "meta-row");
+  Object.entries(meta).forEach(([key, value]) => {
+    row.appendChild(createElement("span", "meta-chip", `${key}: ${value}`));
+  });
+  return row;
+}
+
 function renderVisualization(viz, comparisons) {
   const panel = createElement("article", "panel");
   panel.appendChild(createElement("h4", "", viz.title));
   panel.appendChild(createElement("p", "", viz.description));
 
-  if (viz.meta) {
-    Object.entries(viz.meta).forEach(([key, value]) => {
-      panel.appendChild(createElement("p", "chip", `${key}: ${value}`));
-    });
+  const meta = renderMeta(viz.meta);
+  if (meta) {
+    panel.appendChild(meta);
   }
 
   switch (viz.type) {
@@ -173,15 +254,18 @@ function renderVisualization(viz, comparisons) {
       if (comparisons?.length) {
         panel.appendChild(
           renderTable(
-            ["维度", "传统数据库", "PostgreSQL"],
+            ["维度", "传统方案", "目标方案"],
             comparisons.map((item) => [item.aspect, item.traditional, item.target]),
             "compare-table",
           ),
         );
       }
       break;
+    case "code":
+      panel.appendChild(renderCodeVisualization(viz));
+      break;
     default:
-      panel.appendChild(createElement("p", "", "该图示类型尚未实现。"));
+      panel.appendChild(createElement("p", "", "该类型的可视化暂未实现。"));
   }
 
   return panel;
@@ -201,6 +285,7 @@ function renderCallouts(callouts) {
 function renderStaticSections(sections) {
   const content = document.getElementById("content");
   content.innerHTML = "";
+
   sections.forEach((section) => {
     const block = createElement("section", "section");
     block.id = section.id;
@@ -212,6 +297,11 @@ function renderStaticSections(sections) {
     copy.appendChild(createElement("p", "", section.overview));
     header.appendChild(copy);
     block.appendChild(header);
+
+    const scenario = renderScenario(section);
+    if (scenario) {
+      block.appendChild(scenario);
+    }
 
     block.appendChild(renderHighlights(section.highlights || []));
 
@@ -230,7 +320,7 @@ function renderStaticSections(sections) {
 }
 
 function renderMetricCard(metric) {
-  const card = createElement("div", `metric-card ${metric.tone || ""}`);
+  const card = createElement("div", `metric-card ${metric.tone || ""}`.trim());
   card.appendChild(createElement("span", "chip", metric.label));
   card.appendChild(createElement("strong", "", metric.value || "-"));
   if (metric.hint) {
@@ -250,23 +340,28 @@ function renderSnippet(snippet) {
   const panel = createElement("article", "panel");
   panel.appendChild(createElement("h4", "", snippet.title));
   const pre = createElement("pre", "code-block");
-  const code = createElement("code", snippet.language || "", snippet.content);
+  const code = createElement(
+    "code",
+    snippet.language ? `language-${snippet.language}` : "",
+    snippet.content || "",
+  );
   pre.appendChild(code);
   panel.appendChild(pre);
   return panel;
 }
 
-function renderLiveSections(report) {
-  const target = document.getElementById("live-content");
-  const meta = document.getElementById("live-meta");
+function renderReportSections(report, options) {
+  const target = document.getElementById(options.contentId);
+  const meta = document.getElementById(options.metaId);
   target.innerHTML = "";
 
   if (!report.sections?.length) {
-    meta.textContent = "没有启用任何实时数据库连接。";
+    meta.textContent = options.emptyText;
     return;
   }
 
-  meta.textContent = `最近一次实时分析时间：${report.generatedAt}`;
+  const summary = report.summary ? ` | ${report.summary}` : "";
+  meta.textContent = `${options.timePrefix}${report.generatedAt}${summary}`;
 
   report.sections.forEach((section) => {
     const block = createElement("section", "section");
@@ -278,7 +373,11 @@ function renderLiveSections(report) {
     copy.appendChild(createElement("p", "", section.summary || ""));
     header.appendChild(copy);
 
-    const badge = createElement("span", `status-badge ${section.status || "idle"}`, section.connected ? "Connected" : "Error");
+    const badge = createElement(
+      "span",
+      `status-badge ${section.status || "idle"}`.trim(),
+      section.connected ? "已连接" : "错误",
+    );
     header.appendChild(badge);
     block.appendChild(header);
 
@@ -299,7 +398,7 @@ function renderLiveSections(report) {
       const warningGrid = createElement("div", "callout-grid");
       section.warnings.forEach((warning) => {
         const node = createElement("div", "callout");
-        node.appendChild(createElement("h5", "", "Warning"));
+        node.appendChild(createElement("h5", "", "告警"));
         node.appendChild(createElement("p", "", warning));
         warningGrid.appendChild(node);
       });
@@ -440,16 +539,18 @@ function collectPayload() {
 
 function setBanner(message, state) {
   const banner = document.getElementById("live-banner");
-  banner.className = `live-banner ${state || ""}`;
+  banner.className = `live-banner ${state || ""}`.trim();
   banner.innerHTML = "";
-  banner.appendChild(createElement("strong", "", state === "error" ? "失败" : state === "loading" ? "连接中" : "提示"));
+  const label =
+    state === "error" ? "失败" : state === "loading" ? "连接中" : state === "success" ? "完成" : "提示";
+  banner.appendChild(createElement("strong", "", label));
   banner.appendChild(createElement("span", "", message));
 }
 
 function bindActions() {
   document.getElementById("fill-example").addEventListener("click", () => {
     populateForm(exampleConfig);
-    setBanner("已填充项目自带 Docker Compose 的示例连接参数。", "info");
+    setBanner("已填充 Docker Compose 示例连接参数。", "info");
   });
 
   document.getElementById("clear-config").addEventListener("click", () => {
@@ -460,20 +561,46 @@ function bindActions() {
       mongodb: { enabled: false },
     });
     localStorage.removeItem("db-visual-lab-config");
+    document.getElementById("simulation-content").innerHTML = "";
+    document.getElementById("simulation-meta").textContent = "等待触发模拟。";
     document.getElementById("live-content").innerHTML = "";
     document.getElementById("live-meta").textContent = "等待连接。";
-    setBanner("本地保存的连接配置已清空。", "info");
+    setBanner("已清空本地保存的连接配置。", "info");
+  });
+
+  document.getElementById("simulate-write").addEventListener("click", async () => {
+    const payload = collectPayload();
+    saveConfig(payload);
+    setBanner("正在执行业务写入模拟：会尝试向已启用数据库写入示例数据。", "loading");
+
+    try {
+      const report = await simulateBusinessWrite(payload);
+      renderReportSections(report, {
+        contentId: "simulation-content",
+        metaId: "simulation-meta",
+        emptyText: "当前没有启用任何可模拟写入的数据库连接。",
+        timePrefix: "最近一次模拟时间：",
+      });
+      setBanner("业务写入模拟完成。你可以重复点击观察 Redis 库存、事件流和各库写入结果变化。", "success");
+    } catch (error) {
+      setBanner(`业务写入模拟失败：${error.message}`, "error");
+    }
   });
 
   document.getElementById("analyze").addEventListener("click", async () => {
     const payload = collectPayload();
     saveConfig(payload);
-    setBanner("正在连接数据库并采集实时信息，这一步会访问你启用的实例。", "loading");
+    setBanner("正在连接已启用的数据库并采集实时指标。", "loading");
 
     try {
       const report = await analyzeLive(payload);
-      renderLiveSections(report);
-      setBanner("实时分析已完成。你可以修改连接参数后再次刷新结果。", "success");
+      renderReportSections(report, {
+        contentId: "live-content",
+        metaId: "live-meta",
+        emptyText: "当前没有启用任何实时数据库连接。",
+        timePrefix: "最近一次实时分析时间：",
+      });
+      setBanner("实时分析完成。你可以调整连接参数后再次执行。", "success");
     } catch (error) {
       setBanner(`实时分析失败：${error.message}`, "error");
     }
@@ -490,8 +617,8 @@ loadDemo()
   .then((data) => {
     initialize();
     renderHero(data);
-    renderNav(data.sections);
-    renderStaticSections(data.sections);
+    renderNav(data.sections || []);
+    renderStaticSections(data.sections || []);
   })
   .catch((error) => {
     const content = document.getElementById("content");
